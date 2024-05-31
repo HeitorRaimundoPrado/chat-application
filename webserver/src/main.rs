@@ -17,7 +17,7 @@ use tokio::sync::broadcast::{self, Receiver};
 use tokio::sync::Mutex;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 
 async fn broadcast_messages(
     State(tx): State<Arc<Mutex<broadcast::Sender<String>>>>,
@@ -48,7 +48,7 @@ async fn send_message(
 
 #[tokio::main]
 async fn main() {
-    let service = ServeDir::new("src/static");
+    let service = ServeDir::new("src/static").fallback(ServeFile::new("src/static/index.html"));
 
     let (tx, _) = broadcast::channel(100);
     let tx = Arc::new(Mutex::new(tx));
