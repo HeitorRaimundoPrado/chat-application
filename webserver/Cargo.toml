@@ -5,7 +5,12 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.7.5", features = ["http2", "macros", "multipart"] }
+dotenv = "0.15.0"
 futures = "0.3.30"
+google-oauth = "1.11.0"
+jsonwebtoken = "9.3.0"
+openidconnect = "3.5.0"
+reqwest = { version = "0.12.4", features = ["json"] }
 serde = { version = "1.0.203", features = ["derive"] }
 tokio = { version = "1.37.0", features = ["full"] }
 tokio-stream = { version = "0.1.15", features = ["full"] }
