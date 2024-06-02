@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[diesel(table_name = room)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct RoomModel {
-    id: i32,
+    pub id: i32,
     title: String,
     owner_id: String,
 }

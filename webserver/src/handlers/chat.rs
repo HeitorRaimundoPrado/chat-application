@@ -12,9 +12,12 @@ use tokio_stream::StreamExt;
 
 use crate::models;
 
-use axum::extract::State;
+use axum::extract::{Path, State};
 
-pub async fn broadcast_messages(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn broadcast_messages(
+    State(state): State<AppState>,
+    Path(room_id): Path<usize>,
+) -> impl IntoResponse {
     let (tx, _) = broadcast::channel(100);
     let tx = Arc::new(Mutex::new(tx));
     let rx = tx.lock().await.subscribe();
@@ -26,9 +29,12 @@ pub async fn broadcast_messages(State(state): State<AppState>) -> impl IntoRespo
 
     let stream = handle_sse(rx);
 
+    let senders = state.senders.read().await;
+    println!("{} {:?}", room_id, senders);
+    let room_sender = senders.get(&room_id).unwrap();
+    let mut room_receiver = room_sender.lock().await.subscribe();
+
     tokio::spawn(async move {
-        let room_sender = state.senders.get(&0).unwrap();
-        let mut room_receiver = room_sender.lock().await.subscribe();
         loop {
             let msg = room_receiver.recv().await.unwrap();
             tx.lock().await.send(msg).unwrap();
@@ -47,8 +53,10 @@ fn handle_sse(rx: Receiver<String>) -> impl Stream<Item = Result<Event, Infallib
 
 pub async fn send_message(
     State(state): State<AppState>,
+    Path(room_id): Path<usize>,
     Json(message): Json<models::message::Message>,
 ) -> impl IntoResponse {
-    let tx = state.senders.get(&0).unwrap();
+    let senders = state.senders.read().await;
+    let tx = senders.get(&room_id).unwrap();
     tx.lock().await.send(message.content).unwrap();
 }

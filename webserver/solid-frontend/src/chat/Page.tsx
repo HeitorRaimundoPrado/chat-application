@@ -1,13 +1,17 @@
-import { For, createSignal, onMount, onCleanup, type Component } from "solid-js";
+import { For, createEffect, createSignal, onMount, onCleanup, type Component } from "solid-js";
+import { useLocation, useParams } from "@solidjs/router"
 
 const Chat: Component = () => {
   const [message, setMessage] = createSignal<string>("")
   const [messages, setMessages] = createSignal<string[]>([])
+  const { room_id } = useParams();
+
+  console.log(room_id)
 
   const handleSendMessage = (e: SubmitEvent) => {
     e.preventDefault();
 
-    fetch("/api/message/send", {
+    fetch(`/api/room/${room_id}/send`, {
       method: "POST",
       body: JSON.stringify({
         content: message(),
@@ -18,7 +22,7 @@ const Chat: Component = () => {
     })
   }
 
-  const events = new EventSource("/api/message/listen");
+  const events = new EventSource(`/api/room/${room_id}/listen`);
 
   const handleMessage = (ev: MessageEvent) => {
     console.log(ev.data)

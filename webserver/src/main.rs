@@ -12,8 +12,8 @@ use axum::http::StatusCode;
 use models::room::RoomModel;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tokio::sync::broadcast;
 use tokio::sync::Mutex;
+use tokio::sync::{broadcast, RwLock};
 use tower_http::services::{ServeDir, ServeFile};
 
 use std::sync::Arc;
@@ -79,6 +79,9 @@ async fn create_room(
         .unwrap()
         .unwrap();
 
+    let (tx, _) = broadcast::channel(100);
+    let tx = Arc::new(Mutex::new(tx));
+    app_state.senders.write().await.insert(res.id as usize, tx);
     Json(res).into_response()
 }
 
@@ -105,11 +108,8 @@ async fn main() {
     let pool = Pool::builder(manager).build().unwrap();
     let service = ServeDir::new("src/static").fallback(ServeFile::new("src/static/index.html"));
 
-    let (tx, _) = broadcast::channel(100);
-    let tx = Arc::new(Mutex::new(tx));
-
-    let mut senders: HashMap<usize, Arc<Mutex<broadcast::Sender<String>>>> = HashMap::new();
-    senders.insert(0, tx);
+    let senders: Arc<RwLock<HashMap<usize, Arc<Mutex<broadcast::Sender<String>>>>>> =
+        Arc::new(RwLock::new(HashMap::new()));
 
     let app_state = models::app_state::AppState { senders, pool };
 
@@ -118,10 +118,13 @@ async fn main() {
         .route("/api/room/create", post(create_room))
         .route("/api/rooms/get", get(get_rooms))
         .route(
-            "/api/message/listen",
+            "/api/room/:room_id/listen",
             get(handlers::chat::broadcast_messages),
         )
-        .route("/api/message/send", post(handlers::chat::send_message))
+        .route(
+            "/api/room/:room_id/send",
+            post(handlers::chat::send_message),
+        )
         .with_state(app_state)
         .fallback_service(get_service(service));
 
