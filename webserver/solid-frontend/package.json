@@ -18,6 +18,7 @@
   "dependencies": {
     "@solidjs/router": "^0.13.4",
     "@supabase/supabase-js": "^2.43.4",
+    "solid-icons": "^1.1.0",
     "solid-js": "^1.8.11"
   }
 }

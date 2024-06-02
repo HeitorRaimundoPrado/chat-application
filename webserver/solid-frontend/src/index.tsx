@@ -6,6 +6,7 @@ import { Router } from '@solidjs/router';
 
 import Home from "./Home"
 import Chat from './chat/Page'
+import Rooms from './rooms/Page'
 
 const root = document.getElementById('root');
 
@@ -22,6 +23,10 @@ const routes = [{
 {
   path: "/chat",
   component: Chat
+},
+{
+  path: "/rooms",
+  component: Rooms
 }]
 
 render(() => <Router>{routes}</Router >, root!);
